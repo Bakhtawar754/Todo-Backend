@@ -7,32 +7,50 @@ const router = express.Router();
 
 // Signup
 router.post("/signup", async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
 
   try {
+    console.log("📩 Incoming signup request:", { username, email });
+
+    if (!username || !email || !password) {
+      console.error("❌ Missing fields:", { username, email, password });
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
+    if (existingUser) {
+      console.error("❌ User already exists:", email);
+      return res.status(400).json({ message: "User already exists" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("✅ Password hashed");
 
     const newUser = new User({
       username,
       email,
       password: hashedPassword,
-      role: role || "user",  
     });
 
     await newUser.save();
+    console.log("✅ User saved in DB:", newUser._id);
 
-   const token = jwt.sign(
-      { id: newUser._id, role: newUser.role }, 
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    if (!process.env.JWT_SECRET) {
+      console.error("❌ JWT_SECRET missing in env");
+      return res.status(500).json({ message: "Server misconfigured: JWT_SECRET missing" });
+    }
 
-    res.status(201).json({ token, role: newUser.role });
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    console.log("✅ JWT created");
+
+    return res.status(201).json({
+      message: "Signup successful",
+      token,
+      username: newUser.username,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Signup error", error: err.message });
+    console.error("🔥 Signup error:", err); // log the full error
+    return res.status(500).json({ message: "Signup error", error: err.message });
   }
 });
 
@@ -58,8 +76,7 @@ router.post("/login", async (req, res) => {
     token,
     user: {
       id: user._id,
-      name: user.username, 
-      role: user.role,      
+      name: user.username,     
       email: user.email    
     }
   });
