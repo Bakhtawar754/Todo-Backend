@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import Todo from "../models/todo.js";
+import Todo from "../models/potfolio.js";
 
 const router = express.Router();
 

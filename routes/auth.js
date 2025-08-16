@@ -19,13 +19,13 @@ router.post("/signup", async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role: role || "user",  // ✅ set role
+      role: role || "user",  
     });
 
     await newUser.save();
 
    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role }, // ✅ include role in JWT
+      { id: newUser._id, role: newUser.role }, 
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -54,14 +54,13 @@ router.post("/login", async (req, res) => {
   // Create token
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
-  // Send token + user info
   res.json({
     token,
     user: {
       id: user._id,
-      name: user.username, // or user.name if your schema has it
-      role: user.role,      // if your schema includes 'role'
-      email: user.email     // optional
+      name: user.username, 
+      role: user.role,      
+      email: user.email    
     }
   });
 });
